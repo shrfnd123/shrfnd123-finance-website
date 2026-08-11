@@ -1,0 +1,15 @@
+// Theme Colors
+$color-primary: #0070f3;
+$color-black: #111111;
+$color-white: #ffffff;
+$button-color: #0b5a4b;
+
+// Layout Breakpoints
+$breakpoint-mobile: 768px;
+
+// BEM Mixin Helper (Optional but powerful)
+@mixin mobile {
+  @media (max-width: #{$breakpoint-mobile}) {
+    @content;
+  }
+}
