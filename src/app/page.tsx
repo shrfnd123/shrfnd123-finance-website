@@ -1,16 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-
+import React, { useState } from "react";
 import { Area, AreaChart, ResponsiveContainer } from "recharts";
-
 import {
   ArrowRight,
-  Check,
   Eye,
   EyeOff,
   LockKeyhole,
@@ -19,113 +12,147 @@ import {
   Sparkles,
 } from "lucide-react";
 
-import { loginSchema, LoginSchema } from "@/schemas/auth.schema";
+import { loginSchema, loginSchemaResponse } from "@/schemas/auth.schema";
+import api from "@/api/axios";
+import axios from "axios";
 
-import { login as loginService } from "@/services/auth.service";
-
-import { useAuthStore } from "@/stores/auth.store";
-
-const chartData = [
-  { value: 24 },
-  { value: 32 },
-  { value: 29 },
-  { value: 47 },
-  { value: 43 },
-  { value: 56 },
-  { value: 49 },
-  { value: 67 },
-  { value: 64 },
-  { value: 78 },
-];
-
-export default function LoginPage() {
-  const router = useRouter();
-
+function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
 
-  const [submitted, setSubmitted] = useState(false);
+  const chartData = [
+    { value: 24 },
+    { value: 32 },
+    { value: 29 },
+    { value: 47 },
+    { value: 43 },
+    { value: 56 },
+    { value: 49 },
+    { value: 67 },
+    { value: 64 },
+    { value: 78 },
+  ];
 
-  const setAuth = useAuthStore((state) => state.setAuth);
+  const handleSubmit = async (
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault();
 
-  const form = useForm<LoginSchema>({
-    resolver: zodResolver(loginSchema),
+    const result = loginSchema.safeParse({
+      email,
+      password,
+    });
 
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-  });
-
-  async function onSubmit(data: LoginSchema) {
-    try {
-      const response = await loginService({
-        email: data.email,
-
-        password: data.password,
-      });
-
-      setAuth(response.user, response.token);
-
-      setSubmitted(true);
-
-      setTimeout(() => {
-        router.push("/dashboard");
-      }, 1000);
-    } catch (error: any) {
-      alert(error.response?.data?.message ?? "Invalid email or password");
+    if (!result.success) {
+      console.log(result.error.flatten().fieldErrors);
+      return;
     }
-  }
+
+    try {
+      const response = await api.post(
+        "/login",
+        result.data
+      );
+
+      const parsedResponse = loginSchemaResponse.safeParse(
+        response.data
+      );
+
+      if (!parsedResponse.success) {
+        console.error(
+          "Invalid login response:",
+          parsedResponse.error
+        );
+
+        return;
+      }
+
+      const { access_token } = parsedResponse.data;
+
+      localStorage.setItem("token", access_token);
+
+      console.log("Login successful");
+
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error(
+          "Login failed:",
+          error.response?.data
+        );
+      } else {
+        console.error("Login failed:", error);
+      }
+    }
+  };
 
   return (
-    <main className="min-h-screen bg-[#eef5f2] p-4 sm:p-7 lg:p-10">
-      <div className="mx-auto grid min-h-[calc(100vh-2rem)] max-w-6xl overflow-hidden rounded-[2rem] bg-white shadow-[0_28px_80px_rgba(20,56,48,0.12)] lg:min-h-[680px] lg:grid-cols-[1.03fr_0.97fr]">
-        {/* LEFT SIDE */}
+    <main className="login-form">
+      <div className="login-form__container">
+        {/* =========================================
+            LEFT SIDE
+        ========================================= */}
+        <section className="login-form__container__left-side">
+          {/* Decorative elements */}
+          <div className="login-form__container__glow-left" />
+          <div className="login-form__container__glow-right" />
 
-        <section className="relative hidden overflow-hidden bg-[#0b3028] px-11 py-10 text-white lg:flex lg:flex-col">
-          <div className="absolute -left-24 top-32 size-72 rounded-full bg-[#1f7160] opacity-35 blur-3xl" />
-
-          <div className="absolute -right-24 -bottom-28 size-80 rounded-full border-[36px] border-[#d2f1a6] opacity-90" />
-
-          <div className="relative flex items-center gap-3 text-lg font-bold tracking-tight">
-            <span className="grid size-9 place-items-center rounded-xl bg-[#d2f1a6] text-[#0b3028]">
+          {/* Logo */}
+          <div className="login-form__container__left-side__logo">
+            <span className="login-form__container__left-side__logo__icon">
               <Sparkles size={18} />
             </span>
-            finta
-          </div>
 
-          <div className="relative mt-auto max-w-md pb-7">
-            <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-medium tracking-wide text-[#e7f7de]">
-              <span className="size-1.5 rounded-full bg-[#d2f1a6]" />
+            <span>finta</span>
+          </div>
+          <div className="login-form__container__left-side__content">
+            <p className="login-form__container__left-side__content__header">
+              <span className="login-form__container__left-side__content__header__title" />
               YOUR FINANCIAL HOME
             </p>
-
-            <h1 className="text-5xl font-semibold leading-[1.06] tracking-[-0.055em]">
+            <h1 className="login-form__container__left-side__content__heading">
               A clearer view of your financial life.
             </h1>
-
-            <p className="mt-5 max-w-sm text-[15px] leading-6 text-[#c6ddd6]">
-              Make confident decisions with every account, goal, and opportunity
-              in one calm, intelligent place.
+            <p className="login-form__container__left-side__content__description">
+              Make confident decisions with every account, goal, and
+              opportunity in one calm, intelligent place.
             </p>
-
-            <div className="mt-10 rounded-2xl border border-white/10 bg-white/[0.09] p-5 backdrop-blur-sm">
-              <div className="flex items-start justify-between">
+            <div className="login-form__container__left-side__content__balance-card">
+              <div className="login-form__container__left-side__content__balance-card__header">
                 <div>
-                  <p className="text-xs text-[#b9d2ca]">Your total balance</p>
+                  <p className="login-form__container__left-side__content__balance-card__label">
+                    Your total balance
+                  </p>
 
-                  <p className="mt-1 text-2xl font-semibold">$84,250.12</p>
+                  <p className="login-form__container__left-side__content__balance-card__balance">
+                    $84,250.12
+                  </p>
                 </div>
 
-                <span className="rounded-lg bg-[#d2f1a6] px-2.5 py-1 text-xs font-semibold text-[#173a31]">
+                <span className="login-form__container__left-side__content__balance-card__growth">
                   +12.4%
                 </span>
               </div>
-
-              <div className="mt-2 h-20">
+              <div className="login-form__container__left-side__content__balance-card__chart">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData}>
+                  <AreaChart
+                    data={chartData}
+                    margin={{
+                      top: 5,
+                      right: 0,
+                      left: 0,
+                      bottom: 0,
+                    }}
+                  >
                     <defs>
-                      <linearGradient id="area" x1="0" x2="0" y1="0" y2="1">
+                      <linearGradient
+                        id="balance-area"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
                         <stop
                           offset="0%"
                           stopColor="#d2f1a6"
@@ -145,118 +172,144 @@ export default function LoginPage() {
                       dataKey="value"
                       stroke="#d2f1a6"
                       strokeWidth={2.5}
-                      fill="url(#area)"
+                      fill="url(#balance-area)"
+                      dot={false}
                     />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
             </div>
           </div>
-
-          <p className="relative text-xs text-[#91b1a7]">
-            © 2024 Finta, Inc. All rights reserved.
-          </p>
         </section>
+        <section className="login-form__container__right-side">
+          <div className="login-form__container__form">
+            <div className="login-form__container__form-header">
+              <h2 className="login-form__container__form-title">
+                Welcome back
+              </h2>
 
-        {/* RIGHT SIDE */}
-
-        <section className="flex flex-col px-6 py-7 sm:px-12 sm:py-10 lg:px-16 lg:py-12">
-          <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center">
-            {submitted ? (
-              <SuccessState email={useAuthStore.getState().user?.email ?? ""} />
-            ) : (
-              <>
-                <div>
-                  <p className="text-sm font-medium text-[#16735f]">
-                    WELCOME BACK
-                  </p>
-
-                  <h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-[#13211e]">
-                    Sign in to Finta
-                  </h2>
-
-                  <p className="mt-2 text-sm text-slate-500">
-                    Enter your details to access your workspace.
-                  </p>
-                </div>
-
-                <form
-                  className="mt-8 space-y-5"
-                  onSubmit={form.handleSubmit(onSubmit)}
-                  noValidate
+              <p className="login-form__container__form-description">
+                Sign in to continue to your financial dashboard.
+              </p>
+            </div>
+            <form onSubmit={handleSubmit}>
+              <div className="login-form__container__field">
+                <label
+                  htmlFor="email"
+                  className="login-form__container__label"
                 >
-                  <FieldLabel
-                    label="Email address"
-                    error={form.formState.errors.email?.message}
-                  >
-                    <div className="relative">
-                      <Mail
-                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
-                        size={18}
-                      />
+                  Email address
+                </label>
 
-                      <input
-                        {...form.register("email")}
-                        type="email"
-                        placeholder="you@example.com"
-                        className={inputClass(!!form.formState.errors.email)}
-                      />
-                    </div>
-                  </FieldLabel>
+                <div className="login-form__container__input-wrapper">
+                  <Mail
+                    size={18}
+                    aria-hidden="true"
+                    className="login-form__container__input-icon"
+                  />
 
-                  <FieldLabel
-                    label="Password"
-                    error={form.formState.errors.password?.message}
-                  >
-                    <div className="relative">
-                      <LockKeyhole
-                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
-                        size={18}
-                      />
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    className="login-form__container__input"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="login-form__container__field">
+                <label
+                  htmlFor="password"
+                  className="login-form__container__label"
+                >
+                  Password
+                </label>
 
-                      <input
-                        {...form.register("password")}
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Enter your password"
-                        className={inputClass(!!form.formState.errors.password)}
-                      />
+                <div className="login-form__container__input-wrapper">
+                  <LockKeyhole
+                    size={18}
+                    aria-hidden="true"
+                    className="login-form__container__input-icon"
+                  />
 
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3.5 top-1/2 -translate-y-1/2"
-                      >
-                        {showPassword ? (
-                          <EyeOff size={18} />
-                        ) : (
-                          <Eye size={18} />
-                        )}
-                      </button>
-                    </div>
-                  </FieldLabel>
-
+                  <input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    className="login-form__container__input"
+                    required
+                  />
                   <button
-                    type="submit"
-                    disabled={form.formState.isSubmitting}
-                    className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#0b5a4b] text-sm font-semibold text-white"
+                    type="button"
+                    className="login-form__container__password-toggle"
+                    onClick={() => setShowPassword((previous) => !previous)}
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
                   >
-                    {form.formState.isSubmitting ? (
-                      "Signing in..."
+                    {showPassword ? (
+                      <EyeOff size={18} />
                     ) : (
-                      <>
-                        Sign in
-                        <ArrowRight size={17} />
-                      </>
+                      <Eye size={18} />
                     )}
                   </button>
-                </form>
-              </>
-            )}
-          </div>
+                </div>
+              </div>
+              <div className="login-form__container__forgot-password">
+                <a
+                  href="#"
+                  className="login-form__container__forgot-password-link"
+                >
+                  Forgot password?
+                </a>
+              </div>
+              <button
+                type="submit"
+                className="login-form__container__submit"
+              >
+                <span>Sign in</span>
 
-          <div className="flex items-center justify-center gap-2 text-xs text-slate-400">
-            <ShieldCheck size={15} className="text-[#24836d]" />
-            Your data is secured with bank-level encryption
+                <ArrowRight
+                  size={18}
+                  aria-hidden="true"
+                  className="login-form__container__submit-icon"
+                />
+              </button>
+            </form>
+            <div className="login-form__container__social-login">
+              <button
+                type="button"
+                className="login-form__container__social-button"
+              >
+                <span>Continue with Google</span>
+              </button>
+            </div>
+            <div className="login-form__container__security">
+              <ShieldCheck
+                size={15}
+                aria-hidden="true"
+                className="login-form__container__security-icon"
+              />
+
+              <span>Secure and encrypted connection</span>
+            </div>
+            <p className="login-form__container__sign-up">
+              Don't have an account?{" "}
+              <a
+                href="#"
+                className="login-form__container__sign-up-link"
+              >
+                Create one
+              </a>
+            </p>
           </div>
         </section>
       </div>
@@ -264,49 +317,4 @@ export default function LoginPage() {
   );
 }
 
-function FieldLabel({
-  label,
-  error,
-  children,
-}: {
-  label: string;
-  error?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className="block text-sm font-medium text-slate-700">
-      <span className="mb-2 block">{label}</span>
-
-      {children}
-
-      {error && (
-        <span className="mt-1.5 block text-xs text-rose-600">{error}</span>
-      )}
-    </label>
-  );
-}
-
-function inputClass(error: boolean) {
-  return `
-    h-12 w-full rounded-xl border bg-white pl-11 pr-11
-    text-sm outline-none
-    focus:border-[#16735f]
-    ${error ? "border-rose-400" : "border-slate-200"}
-    `;
-}
-
-function SuccessState({ email }: { email: string }) {
-  return (
-    <div className="text-center">
-      <span className="mx-auto grid size-14 place-items-center rounded-full bg-[#e2f4df] text-[#16735f]">
-        <Check size={27} />
-      </span>
-
-      <h2 className="mt-5 text-3xl font-semibold">You’re all set.</h2>
-
-      <p className="mt-3 text-sm text-slate-500">
-        Welcome back, {email}. Your workspace is ready.
-      </p>
-    </div>
-  );
-}
+export default LoginForm;
