@@ -1,6 +1,6 @@
-@use "@/styles/variables" as *; 
+@use "@/styles/color" as *;
 
 .primary-button {
-    background: bg-[#{$button-color}];
+    background: $primary-color;
     @apply flex h-12 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold text-white;
 }

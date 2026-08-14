@@ -1,3 +1,5 @@
+@use "./colors" as *;
+
 .login-form {
     @apply min-h-screen bg-[#eef5f2] p-4 sm:p-7 lg:p-10;
 
@@ -113,7 +115,9 @@
         }
 
         &__submit {
-            @apply relative mt-8 flex w-full items-center justify-center rounded-xl border-0 bg-[#0b3028] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#17483d];
+            background: $primary-color;
+
+            @apply relative mt-8 flex w-full items-center justify-center rounded-xl border-0 px-6 py-3 text-sm font-semibold text-white transition;
         }
 
         &__submit-icon {

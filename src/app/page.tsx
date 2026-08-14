@@ -15,12 +15,14 @@ import {
 import { loginSchema, loginSchemaResponse } from "@/schemas/auth.schema";
 import api from "@/api/axios";
 import axios from "axios";
+import { useRouter } from "next/navigation";
 
 function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const router = useRouter();
 
   const chartData = [
     { value: 24 },
@@ -73,8 +75,7 @@ function LoginForm() {
 
       localStorage.setItem("token", access_token);
 
-      console.log("Login successful");
-
+      router.push("/dashboard");
     } catch (error) {
       if (axios.isAxiosError(error)) {
         console.error(
